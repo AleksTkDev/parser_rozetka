@@ -102,25 +102,25 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 header = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 '
-                  '(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
 }
 
 
 def get_data_by_selenium(url: str) -> str:
     """Звертається до сервера за url адресою і повертає HTML сайту"""
-    service = Service('chromedriver')  # убедитесь, что у вас установлен chromedriver
+    service = Service("chromedriver")  # убедитесь, что у вас установлен chromedriver
     options = webdriver.ChromeOptions()
-    options.add_argument('--headless')
-    options.add_argument('--disable-gpu')
-    options.add_argument('--no-sandbox')
+    options.add_argument("--headless")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--no-sandbox")
     options.add_argument(f'user-agent={header["User-Agent"]}')
 
     with webdriver.Chrome(service=service, options=options) as driver:
         driver.get(url)
         WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.CLASS_NAME, 'catalog-grid__cell'))
+            EC.presence_of_element_located((By.CLASS_NAME, "catalog-grid__cell"))
         )
         time.sleep(random_sleep(2, 6))  # более короткое случайное ожидание
         data = driver.page_source
@@ -131,40 +131,42 @@ def parse_data(data: str) -> list:
     """Функція парсингу даних з HTML документа"""
     rez = []
     if data:
-        soup = BeautifulSoup(data, 'html.parser')
-        li_list = soup.find_all('li', class_='catalog-grid__cell')
+        soup = BeautifulSoup(data, "html.parser")
+        li_list = soup.find_all("li", class_="catalog-grid__cell")
         for li in li_list:
-            a = li.find('a', class_='goods-tile__heading')
+            a = li.find("a", class_="goods-tile__heading")
             if not a:
                 continue
-            href = a['href']
+            href = a["href"]
             title = a.text.strip()
-            old = li.find('div', class_='goods-tile__price--old')
-            price = li.find('div', class_='goods-tile__price')
+            old = li.find("div", class_="goods-tile__price--old")
+            price = li.find("div", class_="goods-tile__price")
 
-            old_price = ''
+            old_price = ""
             if old:
                 old_price_text = old.text
                 if old_price_text:
-                    old_price = int(''.join(c for c in old_price_text if c.isdigit()))
+                    old_price = int("".join(c for c in old_price_text if c.isdigit()))
 
-            price = int(''.join(c for c in price.text if c.isdigit())) if price else 0
-            rez.append({'title': title, 'href': href, 'price': price, 'old_price': old_price})
+            price = int("".join(c for c in price.text if c.isdigit())) if price else 0
+            rez.append(
+                {"title": title, "href": href, "price": price, "old_price": old_price}
+            )
     return rez
 
 
 def save_to_csv(rows) -> None:
     """Функція збереження даних у CSV-файл"""
-    csv_title = ['title', 'href', 'price', 'old_price']
-    with open('videocards.csv', 'w', newline='', encoding='utf-8') as f:
-        writer = csv.DictWriter(f, fieldnames=csv_title, delimiter=';')
+    csv_title = ["title", "href", "price", "old_price"]
+    with open("videocards.csv", "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=csv_title, delimiter=";")
         writer.writeheader()
         writer.writerows(rows)
 
 
 def main() -> None:
     """Головна функція диригент"""
-    url = 'https://hard.rozetka.com.ua/videocards/c80087/page={}/'
+    url = "https://hard.rozetka.com.ua/videocards/c80087/page={}/"
     rows = []
     for i in range(1, 3):
         data = get_data_by_selenium(url.format(i))
@@ -177,5 +179,5 @@ def random_sleep(min_seconds=1, max_seconds=10):
     return random.randint(min_seconds, max_seconds)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
